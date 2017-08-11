@@ -1,4 +1,3 @@
-import pytest
 from awswrapper import ec2wrapper
 
 # Tests
