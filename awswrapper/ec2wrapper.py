@@ -10,6 +10,13 @@ def get_ec2_connection():
         sys.exit('Error connecting to EC2 check your AWS credentials!')
 
 
+def get_ec2_resource():
+    try:
+        return boto3.resource('ec2')
+    except Exception as e:
+        sys.exit('Error getting EC2 Resource!')
+
+
 def get_instances_ids(ec2_instances):
     instance_ids = []
 
@@ -22,12 +29,12 @@ def get_instances_ids(ec2_instances):
 
 def get_instances_data(ec2_instances):
     instances = []
-
     for reservation in ec2_instances['Reservations']:
         for instance in reservation['Instances']:
             instance_tags = get_tags_from_instance(instance=instance)
             instance_data = {
                 'InstanceId': instance['InstanceId'],
+                'BlockDeviceMappings': instance['BlockDeviceMappings'],
                 'Name': instance_tags['Name'] if "Name" in instance_tags else '',
                 'Owner': instance_tags['Owner'] if "Owner" in instance_tags else ''
             }
@@ -163,3 +170,44 @@ def describe_instances_by_tag(tag, value=None, state=None):
         sys.exit("Error talking with AWS - No 'Reservations' key in Response")
 
     return ec2_response
+
+
+def describe_instances_by_tag_filters(tag_filters, state=None):
+    filters = tag_filters
+
+    if state is not None:
+        filters.append(
+            {
+                'Name': 'instance-state-name',
+                'Values': [state]
+            }
+        )
+
+    ec2 = get_ec2_connection()
+    ec2_response = ec2.describe_instances(
+        Filters=filters,
+    )
+
+    if "Reservations" not in ec2_response:
+        sys.exit("Error talking with AWS - No 'Reservations' key in Response")
+
+    return ec2_response
+
+
+def create_snapshot_from_volume(snapshot_name, description, volume_id):
+    ec2 = get_ec2_resource()
+
+    try:
+        snapshot = ec2.create_snapshot(VolumeId=volume_id, Description=description)
+        snapshot.create_tags(
+            DryRun=False,
+            Tags=[
+                {
+                    'Key': 'Name',
+                    'Value': snapshot_name
+                },
+            ]
+        )
+        return snapshot
+    except Exception as e:
+        sys.exit('Error Creating snapshot!')
