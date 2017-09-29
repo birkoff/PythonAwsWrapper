@@ -14,7 +14,7 @@ setuptools.setup(
     author='Hector Reyes Aleman',
     author_email='birkoffh@gmail.com',
     install_requires=requirements,
-    version='0.1.1',
+    version='0.2.1',
     packages=['awswrapper'],
     description='Wrapper of AWS API to use with Lambda',
     long_description=long_description,

@@ -210,4 +210,4 @@ def create_snapshot_from_volume(snapshot_name, description, volume_id):
         )
         return snapshot
     except Exception as e:
-        sys.exit('Error Creating snapshot!')
+        sys.exit("Error Creating snapshot!\n {0}".format(e.message))
